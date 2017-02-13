@@ -1,0 +1,9 @@
+name: LuckPermsCompat
+version: ${project.version}
+description: ${project.description}
+author: Luck
+website: https://github.com/lucko/LuckPermsCompat
+
+main: me.lucko.luckperms.compat.LuckPermsCompat
+load: STARTUP
+depend: [LuckPerms]
