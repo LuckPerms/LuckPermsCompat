@@ -61,11 +61,15 @@ public class MappedCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String s, String[] a) {
+        if (!sender.hasPermission("luckpermscompat.use")) {
+            LuckPermsCompat.msg(sender, "&cNo permission.");
+            return true;
+        }
+
         List<String> args = new ArrayList<>(Arrays.asList(a));
 
         if (args.size() < arguments.size()) {
-            String usage = arguments.stream().map(str -> "<" + str + ">").collect(Collectors.joining(" "));
-            LuckPermsCompat.msg(sender, "&cUsage: /" + s + " " + usage);
+            LuckPermsCompat.msg(sender, "&cUsage: /" + s + " " + getUsage());
             return true;
         }
 
@@ -77,5 +81,9 @@ public class MappedCommand implements CommandExecutor {
 
         function.perform(plugin, sender, values);
         return true;
+    }
+
+    public String getUsage() {
+        return arguments.stream().map(str -> "<" + str + ">").collect(Collectors.joining(" "));
     }
 }

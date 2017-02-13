@@ -7,8 +7,13 @@ The plugin simply remaps the commands of other permission systems, and directs t
 
 It uses the equivalences found in the [LuckPerms Wiki](https://github.com/lucko/LuckPerms/wiki/GM-&-PEX-Command-Equivalents).
 
-## Usage
+### Usage
 Just install it into your plugins folder, and use commands as normal.
 
-## Supported plugins
+Only users with the "luckpermscompat.use" permission are able to view and use the remapped commands.
+
+### Supported plugins
 Currently just GroupManager. PEX will probably be added soon.
+
+## Requirements
+* LuckPerms v2.17.63 or newer

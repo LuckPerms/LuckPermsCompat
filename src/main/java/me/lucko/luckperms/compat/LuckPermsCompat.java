@@ -32,6 +32,7 @@ import me.lucko.luckperms.compat.mappings.GroupManagerMapping;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandMap;
 import org.bukkit.command.CommandSender;
@@ -47,7 +48,7 @@ import java.util.Map;
 /**
  * A plugin that provides command aliases for LuckPerms commands.
  */
-public class LuckPermsCompat extends JavaPlugin {
+public class LuckPermsCompat extends JavaPlugin implements CommandExecutor {
 
     // Used for registering commands at runtime
     private static Constructor<?> commandConstructor;
@@ -75,6 +76,8 @@ public class LuckPermsCompat extends JavaPlugin {
     // cached command map instance
     private CommandMap commandMap = null;
 
+    private Map<String, MappedCommand> groupManagerMapping = GroupManagerMapping.buildMapping();
+
     @Override
     public void onEnable() {
         getLogger().info("Hooking with LuckPerms.");
@@ -86,11 +89,28 @@ public class LuckPermsCompat extends JavaPlugin {
         luckPerms = (LPBukkitPlugin) instance;
         commandManager = luckPerms.getCommandManager();
 
+        hijackCommand("lpc", this);
+
         // Group Manager
         getLogger().info("Remapping GroupManager commands");
-        registerMapping(GroupManagerMapping.buildMapping());
+        registerMapping(groupManagerMapping);
 
         getLogger().info("Successfully enabled.");
+    }
+
+    @Override
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        msg(sender, "&2Running &bLuckPermsCompat v" + getDescription().getVersion() + "&2, hooked with &bLuckPerms v" + luckPerms.getVersion() + "&2.");
+
+        if (!sender.hasPermission("luckpermscompat.use")) {
+            return true;
+        }
+
+        msg(sender, "&bMapped commands: &7(GroupManager)");
+        for (Map.Entry<String, MappedCommand> cmd : groupManagerMapping.entrySet()) {
+            msg(sender, "&3> &a/" + cmd.getKey() + " " + cmd.getValue().getUsage());
+        }
+        return true;
     }
 
     /**
