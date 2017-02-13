@@ -1,6 +1,8 @@
 # LuckPermsCompat [![Build Status](https://ci.lucko.me/job/LuckPermsCompat/badge/icon)](https://ci.lucko.me/job/LuckPermsCompat/)
 A command compatibility bridge for LuckPerms
 
+## Downloads
+You can get the latest version [here](https://ci.lucko.me/job/LuckPermsCompat/lastSuccessfulBuild/artifact/target/LuckPermsCompat.jar).
 
 ## How does it work
 The plugin simply remaps the commands of other permission systems, and directs the calls to LuckPerms instead.
@@ -15,5 +17,5 @@ Only users with the "luckpermscompat.use" permission are able to view and use th
 ### Supported plugins
 Currently just GroupManager. PEX will probably be added soon.
 
-## Requirements
+### Requirements
 * LuckPerms v2.17.63 or newer
