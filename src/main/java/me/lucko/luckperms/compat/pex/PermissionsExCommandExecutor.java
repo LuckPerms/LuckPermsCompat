@@ -20,10 +20,11 @@
  *  SOFTWARE.
  */
 
-package me.lucko.luckperms.compat;
+package me.lucko.luckperms.compat.pex;
 
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
+
+import me.lucko.luckperms.compat.LuckPermsCompat;
 
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -31,33 +32,12 @@ import org.bukkit.command.CommandSender;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
-/**
- * Abstract command executor for remapped commands
- */
-@RequiredArgsConstructor(staticName = "of")
-public class MappedCommand implements CommandExecutor {
-
-    /**
-     * Plugin instance. This is set when the command is registered with the server
-     */
-    @Setter
-    private LuckPermsCompat plugin = null;
-
-    /**
-     * A list of expected arguments
-     */
-    private final List<String> arguments;
-
-    /**
-     * The function responsible for remapping and executing the LP command equivalent
-     */
-    private final MappingFunction function;
+@RequiredArgsConstructor
+public class PermissionsExCommandExecutor implements CommandExecutor {
+    private final LuckPermsCompat plugin;
+    private final List<PermissionsExCommand> commands;
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String s, String[] a) {
@@ -67,23 +47,18 @@ public class MappedCommand implements CommandExecutor {
         }
 
         List<String> args = new ArrayList<>(Arrays.asList(a));
-
-        if (args.size() < arguments.size()) {
-            LuckPermsCompat.msg(sender, "&cUsage: /" + s + " " + getUsage());
-            return true;
+        if (args.isEmpty()) {
+            return plugin.onCommand(sender, command, s, a);
         }
 
-        Map<String, String> values = new HashMap<>();
-        AtomicInteger counter = new AtomicInteger(-1);
-        for (String expected : arguments) {
-            values.put(expected, args.get(counter.incrementAndGet()));
+        boolean found = false;
+        for (PermissionsExCommand cmd : commands) {
+            if (cmd.tryPerform(sender, args)) {
+                found = true;
+                break;
+            }
         }
 
-        function.perform(plugin, sender, values);
-        return true;
-    }
-
-    public String getUsage() {
-        return arguments.stream().map(str -> "<" + str + ">").collect(Collectors.joining(" "));
+        return found || plugin.onCommand(sender, command, s, a);
     }
 }

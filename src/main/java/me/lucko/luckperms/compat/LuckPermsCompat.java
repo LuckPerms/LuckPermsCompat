@@ -28,7 +28,7 @@ import me.lucko.luckperms.bukkit.BukkitCommand;
 import me.lucko.luckperms.bukkit.LPBukkitPlugin;
 import me.lucko.luckperms.common.commands.utils.Util;
 import me.lucko.luckperms.common.constants.Patterns;
-import me.lucko.luckperms.compat.mappings.GroupManagerMapping;
+import me.lucko.luckperms.compat.groupmanager.GroupManagerMapping;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -43,7 +43,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.util.Map;
 
 /**
  * A plugin that provides command aliases for LuckPerms commands.
@@ -76,8 +75,6 @@ public class LuckPermsCompat extends JavaPlugin implements CommandExecutor {
     // cached command map instance
     private CommandMap commandMap = null;
 
-    private Map<String, MappedCommand> groupManagerMapping = GroupManagerMapping.buildMapping();
-
     @Override
     public void onEnable() {
         getLogger().info("Hooking with LuckPerms.");
@@ -93,7 +90,12 @@ public class LuckPermsCompat extends JavaPlugin implements CommandExecutor {
 
         // Group Manager
         getLogger().info("Remapping GroupManager commands");
-        registerMapping(groupManagerMapping);
+        GroupManagerMapping.registerMapping(this);
+
+        // PermissionsEx
+        // getLogger().info("Remapping PEX commands");
+        // PermissionsExMapping.registerMapping(this);
+
 
         getLogger().info("Successfully enabled.");
     }
@@ -106,22 +108,10 @@ public class LuckPermsCompat extends JavaPlugin implements CommandExecutor {
             return true;
         }
 
-        msg(sender, "&bMapped commands: &7(GroupManager)");
-        for (Map.Entry<String, MappedCommand> cmd : groupManagerMapping.entrySet()) {
-            msg(sender, "&3> &a/" + cmd.getKey() + " " + cmd.getValue().getUsage());
-        }
-        return true;
-    }
+        GroupManagerMapping.sendUsage(sender);
+        // PermissionsExMapping.sendUsage(sender);
 
-    /**
-     * Registers a command mapping with the server
-     * @param commandMap the command map
-     */
-    public void registerMapping(Map<String, MappedCommand> commandMap) {
-        for (Map.Entry<String, MappedCommand> e : commandMap.entrySet()) {
-            e.getValue().setPlugin(this);
-            hijackCommand(e.getKey(), e.getValue());
-        }
+        return true;
     }
 
     /**
@@ -143,7 +133,7 @@ public class LuckPermsCompat extends JavaPlugin implements CommandExecutor {
      * @param alias the command name
      * @param executor the executor instance for the command
      */
-    private void hijackCommand(String alias, CommandExecutor executor) {
+    public void hijackCommand(String alias, CommandExecutor executor) {
         PluginCommand cmd = getServer().getPluginCommand(alias);
         if (cmd == null) {
             try {

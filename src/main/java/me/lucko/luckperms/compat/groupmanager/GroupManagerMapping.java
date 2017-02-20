@@ -20,7 +20,7 @@
  *  SOFTWARE.
  */
 
-package me.lucko.luckperms.compat.mappings;
+package me.lucko.luckperms.compat.groupmanager;
 
 import lombok.experimental.UtilityClass;
 
@@ -28,7 +28,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
 import me.lucko.luckperms.compat.LuckPermsCompat;
-import me.lucko.luckperms.compat.MappedCommand;
+
+import org.bukkit.command.CommandSender;
 
 import java.util.Map;
 
@@ -37,55 +38,70 @@ import java.util.Map;
  */
 @UtilityClass
 public class GroupManagerMapping {
+    private static final Map<String, GroupManagerCommand> MAPPING = buildMapping();
 
-    public Map<String, MappedCommand> buildMapping() {
-        ImmutableMap.Builder<String, MappedCommand> commands = ImmutableMap.builder();
+    public static void sendUsage(CommandSender sender) {
+        LuckPermsCompat.msg(sender, "&bMapped commands: &7(GroupManager)");
+        for (Map.Entry<String, GroupManagerCommand> cmd : MAPPING.entrySet()) {
+            LuckPermsCompat.msg(sender, "&3> &a/" + cmd.getKey() + " " + cmd.getValue().getUsage());
+        }
+    }
+
+    public static void registerMapping(LuckPermsCompat plugin) {
+        for (Map.Entry<String, GroupManagerCommand> e : MAPPING.entrySet()) {
+            e.getValue().setPlugin(plugin);
+            plugin.hijackCommand(e.getKey(), e.getValue());
+        }
+    }
+
+    private static Map<String, GroupManagerCommand> buildMapping() {
+        ImmutableMap.Builder<String, GroupManagerCommand> commands = ImmutableMap.builder();
 
         /*
          * User commands
          */
-        commands.put("manuadd", MappedCommand.of(ImmutableList.of("player", "group"), (plugin, sender, arguments) -> {
+        commands.put("manuadd", GroupManagerCommand.of(ImmutableList.of("player", "group"), (plugin, sender, arguments) -> {
             String player = arguments.get("player");
             String group = arguments.get("group");
 
             plugin.executeCommand(sender, "user " + player + " parent set " + group);
         }));
 
-        commands.put("manudel", MappedCommand.of(ImmutableList.of("player"), (plugin, sender, arguments) -> {
+        commands.put("manudel", GroupManagerCommand.of(ImmutableList.of("player"), (plugin, sender, arguments) -> {
             String player = arguments.get("player");
             plugin.executeCommand(sender, "user " + player + " clear");
         }));
 
-        commands.put("manuaddsub", MappedCommand.of(ImmutableList.of("player", "group"), (plugin, sender, arguments) -> {
+        commands.put("manuaddsub", GroupManagerCommand.of(ImmutableList.of("player", "group"), (plugin, sender, arguments) -> {
             String player = arguments.get("player");
             String group = arguments.get("group");
 
             plugin.executeCommand(sender, "user " + player + " parent add " + group);
         }));
 
-        commands.put("manudelsub", MappedCommand.of(ImmutableList.of("player", "group"), (plugin, sender, arguments) -> {
+        commands.put("manudelsub", GroupManagerCommand.of(ImmutableList.of("player", "group"), (plugin, sender, arguments) -> {
             String player = arguments.get("player");
             String group = arguments.get("group");
 
             plugin.executeCommand(sender, "user " + player + " parent remove " + group);
         }));
 
-        commands.put("manpromote", MappedCommand.of(ImmutableList.of(), (plugin, sender, arguments) -> {
+        commands.put("manpromote", GroupManagerCommand.of(ImmutableList.of(), (plugin, sender, arguments) -> {
             LuckPermsCompat.msg(sender, "Promotions in LuckPerms are performed using tracks. &7(see /lp track)");
             LuckPermsCompat.msg(sender, "&7More info can be found here: https://github.com/lucko/LuckPerms/wiki/Tracks");
         }));
 
-        commands.put("mandemote", MappedCommand.of(ImmutableList.of(), (plugin, sender, arguments) -> {
+        commands.put("mandemote", GroupManagerCommand.of(ImmutableList.of(), (plugin, sender, arguments) -> {
             LuckPermsCompat.msg(sender, "Promotions in LuckPerms are performed using tracks. &7(see /lp track)");
             LuckPermsCompat.msg(sender, "&7More info can be found here: https://github.com/lucko/LuckPerms/wiki/Tracks");
         }));
 
-        commands.put("manuwhois", MappedCommand.of(ImmutableList.of("player"), (plugin, sender, arguments) -> {
+        commands.put("manuwhois", GroupManagerCommand.of(ImmutableList.of("player"), (plugin, sender, arguments) -> {
             String player = arguments.get("player");
             plugin.executeCommand(sender, "user " + player + " info");
         }));
 
-        commands.put("manuaddp", MappedCommand.of(ImmutableList.of("player", "permission"), (plugin, sender, arguments) -> {
+        commands.put("manuaddp", GroupManagerCommand.of(ImmutableList.of("player", "permission"), (plugin, sender, arguments) -> {
             String player = arguments.get("player");
             String permission = arguments.get("permission");
 
@@ -98,26 +114,26 @@ public class GroupManagerMapping {
             plugin.executeCommand(sender, "user " + player + " permission set " + permission + " " + value);
         }));
 
-        commands.put("manudelp", MappedCommand.of(ImmutableList.of("player", "permission"), (plugin, sender, arguments) -> {
+        commands.put("manudelp", GroupManagerCommand.of(ImmutableList.of("player", "permission"), (plugin, sender, arguments) -> {
             String player = arguments.get("player");
             String permission = arguments.get("permission");
 
             plugin.executeCommand(sender, "user " + player + " permission unset " + permission);
         }));
 
-        commands.put("manulistp", MappedCommand.of(ImmutableList.of("player"), (plugin, sender, arguments) -> {
+        commands.put("manulistp", GroupManagerCommand.of(ImmutableList.of("player"), (plugin, sender, arguments) -> {
             String player = arguments.get("player");
             plugin.executeCommand(sender, "user " + player + " permission info");
         }));
 
-        commands.put("manucheckp", MappedCommand.of(ImmutableList.of("player", "permission"), (plugin, sender, arguments) -> {
+        commands.put("manucheckp", GroupManagerCommand.of(ImmutableList.of("player", "permission"), (plugin, sender, arguments) -> {
             String player = arguments.get("player");
             String permission = arguments.get("permission");
 
             plugin.executeCommand(sender, "user " + player + " permission checkinherits " + permission);
         }));
 
-        commands.put("manuaddv", MappedCommand.of(ImmutableList.of("user", "variable", "value"), (plugin, sender, arguments) -> {
+        commands.put("manuaddv", GroupManagerCommand.of(ImmutableList.of("user", "variable", "value"), (plugin, sender, arguments) -> {
             String user = arguments.get("user");
             String variable = arguments.get("variable");
             String value = arguments.get("value");
@@ -137,7 +153,7 @@ public class GroupManagerMapping {
             plugin.executeCommand(sender, "user " + user + " meta set " + variable + " " + value);
         }));
 
-        commands.put("manudelv", MappedCommand.of(ImmutableList.of("user", "variable"), (plugin, sender, arguments) -> {
+        commands.put("manudelv", GroupManagerCommand.of(ImmutableList.of("user", "variable"), (plugin, sender, arguments) -> {
             String user = arguments.get("user");
             String variable = arguments.get("variable");
 
@@ -156,12 +172,12 @@ public class GroupManagerMapping {
             plugin.executeCommand(sender, "user " + user + " meta unset " + variable);
         }));
 
-        commands.put("manulistv", MappedCommand.of(ImmutableList.of("user"), (plugin, sender, arguments) -> {
+        commands.put("manulistv", GroupManagerCommand.of(ImmutableList.of("user"), (plugin, sender, arguments) -> {
             String user = arguments.get("user");
             plugin.executeCommand(sender, "user " + user + " meta info");
         }));
 
-        commands.put("manucheckv", MappedCommand.of(ImmutableList.of("user"), (plugin, sender, arguments) -> {
+        commands.put("manucheckv", GroupManagerCommand.of(ImmutableList.of("user"), (plugin, sender, arguments) -> {
             String user = arguments.get("user");
             plugin.executeCommand(sender, "user " + user + " meta info");
         }));
@@ -170,35 +186,35 @@ public class GroupManagerMapping {
         /*
          * Group commands
          */
-        commands.put("mangadd", MappedCommand.of(ImmutableList.of("group"), (plugin, sender, arguments) -> {
+        commands.put("mangadd", GroupManagerCommand.of(ImmutableList.of("group"), (plugin, sender, arguments) -> {
             String group = arguments.get("group");
             plugin.executeCommand(sender, "creategroup " + group);
         }));
 
-        commands.put("mangdel", MappedCommand.of(ImmutableList.of("group"), (plugin, sender, arguments) -> {
+        commands.put("mangdel", GroupManagerCommand.of(ImmutableList.of("group"), (plugin, sender, arguments) -> {
             String group = arguments.get("group");
             plugin.executeCommand(sender, "deletegroup " + group);
         }));
 
-        commands.put("mangaddi", MappedCommand.of(ImmutableList.of("group1", "group2"), (plugin, sender, arguments) -> {
+        commands.put("mangaddi", GroupManagerCommand.of(ImmutableList.of("group1", "group2"), (plugin, sender, arguments) -> {
             String group1 = arguments.get("group1");
             String group2 = arguments.get("group2");
 
             plugin.executeCommand(sender, "group " + group1 + " parent add " + group2);
         }));
 
-        commands.put("mangdeli", MappedCommand.of(ImmutableList.of("group1", "group2"), (plugin, sender, arguments) -> {
+        commands.put("mangdeli", GroupManagerCommand.of(ImmutableList.of("group1", "group2"), (plugin, sender, arguments) -> {
             String group1 = arguments.get("group1");
             String group2 = arguments.get("group2");
 
             plugin.executeCommand(sender, "group " + group1 + " parent remove " + group2);
         }));
 
-        commands.put("listgroups", MappedCommand.of(ImmutableList.of(), (plugin, sender, arguments) -> {
+        commands.put("listgroups", GroupManagerCommand.of(ImmutableList.of(), (plugin, sender, arguments) -> {
             plugin.executeCommand(sender, "listgroups");
         }));
 
-        commands.put("mangaddp", MappedCommand.of(ImmutableList.of("group", "permission"), (plugin, sender, arguments) -> {
+        commands.put("mangaddp", GroupManagerCommand.of(ImmutableList.of("group", "permission"), (plugin, sender, arguments) -> {
             String group = arguments.get("group");
             String permission = arguments.get("permission");
 
@@ -211,26 +227,26 @@ public class GroupManagerMapping {
             plugin.executeCommand(sender, "group " + group + " permission set " + permission + " " + value);
         }));
 
-        commands.put("mangdelp", MappedCommand.of(ImmutableList.of("group", "permission"), (plugin, sender, arguments) -> {
+        commands.put("mangdelp", GroupManagerCommand.of(ImmutableList.of("group", "permission"), (plugin, sender, arguments) -> {
             String group = arguments.get("group");
             String permission = arguments.get("permission");
 
             plugin.executeCommand(sender, "group " + group + " permission unset " + permission);
         }));
 
-        commands.put("manglistp", MappedCommand.of(ImmutableList.of("group"), (plugin, sender, arguments) -> {
+        commands.put("manglistp", GroupManagerCommand.of(ImmutableList.of("group"), (plugin, sender, arguments) -> {
             String group = arguments.get("group");
             plugin.executeCommand(sender, "group " + group + " permission info");
         }));
 
-        commands.put("mangcheckp", MappedCommand.of(ImmutableList.of("group", "permission"), (plugin, sender, arguments) -> {
+        commands.put("mangcheckp", GroupManagerCommand.of(ImmutableList.of("group", "permission"), (plugin, sender, arguments) -> {
             String group = arguments.get("group");
             String permission = arguments.get("permission");
 
             plugin.executeCommand(sender, "group " + group + " permission checkinherits " + permission);
         }));
 
-        commands.put("mangaddv", MappedCommand.of(ImmutableList.of("group", "variable", "value"), (plugin, sender, arguments) -> {
+        commands.put("mangaddv", GroupManagerCommand.of(ImmutableList.of("group", "variable", "value"), (plugin, sender, arguments) -> {
             String group = arguments.get("group");
             String variable = arguments.get("variable");
             String value = arguments.get("value");
@@ -250,7 +266,7 @@ public class GroupManagerMapping {
             plugin.executeCommand(sender, "group " + group + " meta set " + variable + " " + value);
         }));
 
-        commands.put("mangdelv", MappedCommand.of(ImmutableList.of("group", "variable"), (plugin, sender, arguments) -> {
+        commands.put("mangdelv", GroupManagerCommand.of(ImmutableList.of("group", "variable"), (plugin, sender, arguments) -> {
             String group = arguments.get("group");
             String variable = arguments.get("variable");
 
@@ -269,12 +285,12 @@ public class GroupManagerMapping {
             plugin.executeCommand(sender, "group " + group + " meta unset " + variable);
         }));
 
-        commands.put("manglistv", MappedCommand.of(ImmutableList.of("group"), (plugin, sender, arguments) -> {
+        commands.put("manglistv", GroupManagerCommand.of(ImmutableList.of("group"), (plugin, sender, arguments) -> {
             String group = arguments.get("group");
             plugin.executeCommand(sender, "group " + group + " meta info");
         }));
 
-        commands.put("mangcheckv", MappedCommand.of(ImmutableList.of("group"), (plugin, sender, arguments) -> {
+        commands.put("mangcheckv", GroupManagerCommand.of(ImmutableList.of("group"), (plugin, sender, arguments) -> {
             String group = arguments.get("group");
             plugin.executeCommand(sender, "group " + group + " meta info");
         }));
@@ -283,25 +299,25 @@ public class GroupManagerMapping {
         /*
          * Utility commands
          */
-        commands.put("mansave", MappedCommand.of(ImmutableList.of(), (plugin, sender, arguments) -> {
+        commands.put("mansave", GroupManagerCommand.of(ImmutableList.of(), (plugin, sender, arguments) -> {
             plugin.executeCommand(sender, "sync");
         }));
 
-        commands.put("manload", MappedCommand.of(ImmutableList.of(), (plugin, sender, arguments) -> {
+        commands.put("manload", GroupManagerCommand.of(ImmutableList.of(), (plugin, sender, arguments) -> {
             plugin.executeCommand(sender, "sync");
         }));
 
-        commands.put("manworld", MappedCommand.of(ImmutableList.of(), (plugin, sender, arguments) -> {
+        commands.put("manworld", GroupManagerCommand.of(ImmutableList.of(), (plugin, sender, arguments) -> {
             LuckPermsCompat.msg(sender, "World specific permissions are granted via added command arguments.");
             LuckPermsCompat.msg(sender, "&7More info can be found here: https://github.com/lucko/LuckPerms/wiki/Command-Usage");
         }));
 
-        commands.put("manselect", MappedCommand.of(ImmutableList.of(), (plugin, sender, arguments) -> {
+        commands.put("manselect", GroupManagerCommand.of(ImmutableList.of(), (plugin, sender, arguments) -> {
             LuckPermsCompat.msg(sender, "World specific permissions are granted via added command arguments.");
             LuckPermsCompat.msg(sender, "&7More info can be found here: https://github.com/lucko/LuckPerms/wiki/Command-Usage");
         }));
 
-        commands.put("manclear", MappedCommand.of(ImmutableList.of(), (plugin, sender, arguments) -> {
+        commands.put("manclear", GroupManagerCommand.of(ImmutableList.of(), (plugin, sender, arguments) -> {
             LuckPermsCompat.msg(sender, "World specific permissions are granted via added command arguments.");
             LuckPermsCompat.msg(sender, "&7More info can be found here: https://github.com/lucko/LuckPerms/wiki/Command-Usage");
         }));
