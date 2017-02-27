@@ -29,6 +29,7 @@ import me.lucko.luckperms.bukkit.LPBukkitPlugin;
 import me.lucko.luckperms.common.commands.utils.Util;
 import me.lucko.luckperms.common.constants.Patterns;
 import me.lucko.luckperms.compat.groupmanager.GroupManagerMapping;
+import me.lucko.luckperms.compat.permissionsex.PermissionsExMapping;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -93,9 +94,8 @@ public class LuckPermsCompat extends JavaPlugin implements CommandExecutor {
         GroupManagerMapping.registerMapping(this);
 
         // PermissionsEx
-        // getLogger().info("Remapping PEX commands");
-        // PermissionsExMapping.registerMapping(this);
-
+        getLogger().info("Remapping PEX commands");
+        PermissionsExMapping.registerMapping(this);
 
         getLogger().info("Successfully enabled.");
     }
@@ -109,7 +109,7 @@ public class LuckPermsCompat extends JavaPlugin implements CommandExecutor {
         }
 
         GroupManagerMapping.sendUsage(sender);
-        // PermissionsExMapping.sendUsage(sender);
+        PermissionsExMapping.sendUsage(sender);
 
         return true;
     }

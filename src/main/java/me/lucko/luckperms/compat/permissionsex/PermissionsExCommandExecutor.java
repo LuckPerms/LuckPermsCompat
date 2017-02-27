@@ -20,7 +20,7 @@
  *  SOFTWARE.
  */
 
-package me.lucko.luckperms.compat.pex;
+package me.lucko.luckperms.compat.permissionsex;
 
 import lombok.RequiredArgsConstructor;
 

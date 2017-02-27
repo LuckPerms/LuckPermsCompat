@@ -20,10 +20,11 @@
  *  SOFTWARE.
  */
 
-package me.lucko.luckperms.compat.pex;
+package me.lucko.luckperms.compat.permissionsex;
 
 import lombok.experimental.UtilityClass;
 
+import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 
 import me.lucko.luckperms.compat.LuckPermsCompat;
@@ -287,8 +288,251 @@ public class PermissionsExMapping {
             }
         }));
 
+
+        /*
+         * Default group management
+         */
+        commands.add(PermissionsExCommand.of(ImmutableList.of("default", "group"), (plugin, sender, arguments) -> {
+            LuckPermsCompat.msg(sender, "LuckPerms does not have a 'default group' as such - however, there are other ways to customize defaults.");
+            LuckPermsCompat.msg(sender, "&7More info can be found here: https://github.com/lucko/LuckPerms/wiki/Default-Groups");
+        }));
+
+        commands.add(PermissionsExCommand.of(ImmutableList.of("set", "default", "group"), (plugin, sender, arguments) -> {
+            LuckPermsCompat.msg(sender, "LuckPerms does not have a 'default group' as such - however, there are other ways to customize defaults.");
+            LuckPermsCompat.msg(sender, "&7More info can be found here: https://github.com/lucko/LuckPerms/wiki/Default-Groups");
+        }));
+
+
+        /*
+         * Group commands
+         */
+        commands.add(PermissionsExCommand.of(ImmutableList.of("groups"), (plugin, sender, arguments) -> {
+            plugin.executeCommand(sender, "listgroups");
+        }));
+
+        commands.add(PermissionsExCommand.of(ImmutableList.of("groups", "list"), (plugin, sender, arguments) -> {
+            plugin.executeCommand(sender, "listgroups");
+        }));
+
+        commands.add(PermissionsExCommand.of(ImmutableList.of("group", "<group>", "prefix", "[new prefix]"), (plugin, sender, arguments) -> {
+            String group = arguments.get("group");
+            String prefix = arguments.get("new prefix");
+
+            if (prefix != null) {
+                LuckPermsCompat.msg(sender, "Prefixes in LuckPerms are applied with weights.");
+                LuckPermsCompat.msg(sender, "&cUsage: /lp group " + group + " meta addprefix <weight> " + prefix);
+            } else {
+                LuckPermsCompat.msg(sender, "Prefixes in LuckPerms are applied with weights.");
+                LuckPermsCompat.msg(sender, "&cUsage: /lp group " + group + " meta removeprefix <weight>");
+            }
+        }));
+
+        commands.add(PermissionsExCommand.of(ImmutableList.of("group", "<group>", "suffix", "[new suffix]"), (plugin, sender, arguments) -> {
+            String group = arguments.get("group");
+            String suffix = arguments.get("new suffix");
+
+            if (suffix != null) {
+                LuckPermsCompat.msg(sender, "Suffixes in LuckPerms are applied with weights.");
+                LuckPermsCompat.msg(sender, "&cUsage: /lp group " + group + " meta addsuffix <weight> " + suffix);
+            } else {
+                LuckPermsCompat.msg(sender, "Suffixes in LuckPerms are applied with weights.");
+                LuckPermsCompat.msg(sender, "&cUsage: /lp group " + group + " meta removesuffix <weight>");
+            }
+        }));
+
+        commands.add(PermissionsExCommand.of(ImmutableList.of("group", "<group>", "create"), (plugin, sender, arguments) -> {
+            String group = arguments.get("group");
+
+            plugin.executeCommand(sender, "creategroup " + group);
+        }));
+
+        commands.add(PermissionsExCommand.of(ImmutableList.of("group", "<group>", "delete"), (plugin, sender, arguments) -> {
+            String group = arguments.get("group");
+
+            plugin.executeCommand(sender, "deletegroup " + group);
+        }));
+
+        commands.add(PermissionsExCommand.of(ImmutableList.of("group", "<group>", "parents", "list"), (plugin, sender, arguments) -> {
+            String group = arguments.get("group");
+
+            plugin.executeCommand(sender, "group " + group + " parent info");
+        }));
+
+        commands.add(PermissionsExCommand.of(ImmutableList.of("group", "<group>", "parents", "set", "<parents>"), (plugin, sender, arguments) -> {
+            String group = arguments.get("group");
+            List<String> parents = Splitter.on(',').omitEmptyStrings().splitToList(arguments.get("parents"));
+            if (parents.isEmpty()) {
+                return;
+            }
+
+            plugin.executeCommand(sender, "group " + group + " parent clear");
+
+            for (String parent : parents) {
+                plugin.executeCommand(sender, "group " + group + " parent add " + parent);
+            }
+        }));
+
+        commands.add(PermissionsExCommand.of(ImmutableList.of("group", "<group>", "list"), (plugin, sender, arguments) -> {
+            String group = arguments.get("group");
+
+            plugin.executeCommand(sender, "group " + group + " permission info");
+        }));
+
+        commands.add(PermissionsExCommand.of(ImmutableList.of("group", "<group>", "add", "<permission>", "[world]"), (plugin, sender, arguments) -> {
+            String group = arguments.get("group");
+            String permission = arguments.get("permission");
+            String world = arguments.getOrDefault("world", null);
+
+            boolean value = true;
+            if (permission.startsWith("-") || permission.startsWith("!")) {
+                value = false;
+                permission = permission.substring(1);
+            }
+
+            if (world != null) {
+                plugin.executeCommand(sender, "group " + group + " permission set " + permission + " " + value + " global " + world);
+            } else {
+                plugin.executeCommand(sender, "group " + group + " permission set " + permission + " " + value);
+            }
+        }));
+
+        commands.add(PermissionsExCommand.of(ImmutableList.of("group", "<group>", "remove", "<permission>", "[world]"), (plugin, sender, arguments) -> {
+            String group = arguments.get("group");
+            String permission = arguments.get("permission");
+            String world = arguments.getOrDefault("world", null);
+
+            if (world != null) {
+                plugin.executeCommand(sender, "group " + group + " permission unset " + permission + " global " + world);
+            } else {
+                plugin.executeCommand(sender, "group " + group + " permission unset " + permission);
+            }
+        }));
+
+        commands.add(PermissionsExCommand.of(ImmutableList.of("group", "<group>", "timed", "add", "<permission>", "<lifetime>", "[world]"), (plugin, sender, arguments) -> {
+            String group = arguments.get("group");
+            String permission = arguments.get("permission");
+            String lifetime = arguments.get("lifetime") + "seconds";
+            String world = arguments.getOrDefault("world", null);
+
+            boolean value = true;
+            if (permission.startsWith("-") || permission.startsWith("!")) {
+                value = false;
+                permission = permission.substring(1);
+            }
+
+            if (world != null) {
+                plugin.executeCommand(sender, "group " + group + " permission settemp " + permission + " " + value + " " + lifetime + " global " + world);
+            } else {
+                plugin.executeCommand(sender, "group " + group + " permission unset " + permission + " " + value + " " + lifetime);
+            }
+        }));
+
+        commands.add(PermissionsExCommand.of(ImmutableList.of("group", "<group>", "timed", "remove", "<permission>", "<lifetime>", "[world]"), (plugin, sender, arguments) -> {
+            String group = arguments.get("group");
+            String permission = arguments.get("permission");
+            String world = arguments.getOrDefault("world", null);
+
+            if (world != null) {
+                plugin.executeCommand(sender, "group " + group + " permission unsettemp " + permission + " global " + world);
+            } else {
+                plugin.executeCommand(sender, "group " + group + " permission unsettemp " + permission);
+            }
+        }));
+
+        commands.add(PermissionsExCommand.of(ImmutableList.of("group", "<group>", "set", "<option>", "<value>", "[world]"), (plugin, sender, arguments) -> {
+            String group = arguments.get("group");
+            String option = arguments.get("option");
+            String value = arguments.get("value");
+            String world = arguments.getOrDefault("world", null);
+
+            if (value.equals("\"\"")) {
+                // unset
+                if (world != null) {
+                    plugin.executeCommand(sender, "group " + group + " meta unset " + option + " global " + world);
+                } else {
+                    plugin.executeCommand(sender, "group " + group + " meta unset " + option);
+                }
+            } else {
+                if (world != null) {
+                    plugin.executeCommand(sender, "group " + group + " meta set " + option + " " + value + " global " + world);
+                } else {
+                    plugin.executeCommand(sender, "group " + group + " meta set " + option + " " + value);
+                }
+            }
+        }));
+
+        commands.add(PermissionsExCommand.of(ImmutableList.of("group", "<group>", "weight", "[weight]"), (plugin, sender, arguments) -> {
+            String group = arguments.get("group");
+            String weight = arguments.getOrDefault("weight", null);
+
+            if (weight == null) {
+                plugin.executeCommand(sender, "group " + group + " info");
+                return;
+            }
+
+            try {
+                Integer.parseInt(weight);
+            } catch (NumberFormatException e) {
+                LuckPermsCompat.msg(sender, "Weight '" + weight + "' is not a number.");
+                return;
+            }
+
+            LuckPermsCompat.msg(sender, "Reminder: Weights in LuckPerms are opposite to PEX. A higher number = higher weight.");
+            plugin.executeCommand(sender, "group " + group + " setweight " + weight);
+
+        }));
+
+        commands.add(PermissionsExCommand.of(ImmutableList.of("group", "<group>", "users"), (plugin, sender, arguments) -> {
+            String group = arguments.get("group");
+
+            plugin.executeCommand(sender, "search group." + group);
+        }));
+
+        commands.add(PermissionsExCommand.of(ImmutableList.of("group", "<group>", "user", "add" + "<user>"), (plugin, sender, arguments) -> {
+            List<String> groups = Splitter.on(',').omitEmptyStrings().splitToList(arguments.get("group"));
+            List<String> users = Splitter.on(',').omitEmptyStrings().splitToList(arguments.get("user"));
+
+            if (groups.isEmpty() || users.isEmpty()) {
+                return;
+            }
+
+            for (String group : groups) {
+                for (String user : users) {
+                    plugin.executeCommand(sender, "user " + user + " parent add " + group);
+                }
+            }
+        }));
+
+        commands.add(PermissionsExCommand.of(ImmutableList.of("group", "<group>", "user", "remove" + "<user>"), (plugin, sender, arguments) -> {
+            List<String> groups = Splitter.on(',').omitEmptyStrings().splitToList(arguments.get("group"));
+            List<String> users = Splitter.on(',').omitEmptyStrings().splitToList(arguments.get("user"));
+
+            if (groups.isEmpty() || users.isEmpty()) {
+                return;
+            }
+
+            for (String group : groups) {
+                for (String user : users) {
+                    plugin.executeCommand(sender, "user " + user + " parent remove " + group);
+                }
+            }
+        }));
+
+        commands.add(PermissionsExCommand.of(ImmutableList.of("promote", "<user>", "<latter>"), (plugin, sender, arguments) -> {
+            String user = arguments.get("user");
+            String ladder = arguments.get("ladder");
+
+            plugin.executeCommand(sender, "user " + user + " promote " + ladder);
+        }));
+
+        commands.add(PermissionsExCommand.of(ImmutableList.of("demote", "<user>", "<latter>"), (plugin, sender, arguments) -> {
+            String user = arguments.get("user");
+            String ladder = arguments.get("ladder");
+
+            plugin.executeCommand(sender, "user " + user + " demote " + ladder);
+        }));
+
         return commands.build();
     }
-
 
 }
