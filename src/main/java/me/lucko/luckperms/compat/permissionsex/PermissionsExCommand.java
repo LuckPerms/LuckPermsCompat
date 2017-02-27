@@ -58,24 +58,20 @@ public class PermissionsExCommand {
     private final MappingFunction function;
 
     public boolean tryPerform(CommandSender sender, List<String> args) {
-        if (args.size() < structure.size()) {
-            return false;
-        }
-
         Map<String, String> values = new HashMap<>();
 
         for (int i = 0; i < structure.size(); i++) {
-            String s = structure.get(i);
-            boolean present = i >= args.size();
+            String part = structure.get(i);
+            boolean present = i < args.size();
 
-            if (!isChangeable(s)) {
+            if (!isChangeable(part)) {
                 // it must match
                 if (!present) {
                     return false;
                 }
 
                 String value = args.get(i);
-                if (!s.equalsIgnoreCase(value)) {
+                if (!part.equalsIgnoreCase(value)) {
                     return false;
                 }
 
@@ -84,7 +80,7 @@ public class PermissionsExCommand {
 
             // Pull the value
             String val = null;
-            if (!isOptional(s) && !present) {
+            if (!isOptional(part) && !present) {
                 return false;
             }
             if (present) {
@@ -92,7 +88,7 @@ public class PermissionsExCommand {
             }
 
             if (val != null) {
-                values.put(stripIndicators(s), val);
+                values.put(stripIndicators(part), val);
             }
         }
 

@@ -48,6 +48,10 @@ public class PermissionsExMapping {
     }
 
     public static void registerMapping(LuckPermsCompat plugin) {
+        for (PermissionsExCommand cmd : MAPPING) {
+            cmd.setPlugin(plugin);
+        }
+
         plugin.hijackCommand("pex", new PermissionsExCommandExecutor(plugin, MAPPING));
     }
 
@@ -123,7 +127,7 @@ public class PermissionsExMapping {
         commands.add(PermissionsExCommand.of(ImmutableList.of("user", "<user>", "prefix", "[new prefix]"), (plugin, sender, arguments) -> {
             String user = arguments.get("user");
             String prefix = arguments.get("new prefix");
-            
+
             if (prefix != null) {
                 LuckPermsCompat.msg(sender, "Prefixes in LuckPerms are applied with weights.");
                 LuckPermsCompat.msg(sender, "&cUsage: /lp user " + user + " meta addprefix <weight> " + prefix);
@@ -257,9 +261,9 @@ public class PermissionsExMapping {
                 }
             } else {
                 if (!world.equals("*")) {
-                    plugin.executeCommand(sender, "user " + user + " parent set " + group + " global " + world);
+                    plugin.executeCommand(sender, "user " + user + " parent add " + group + " global " + world);
                 } else {
-                    plugin.executeCommand(sender, "user " + user + " parent set " + group);
+                    plugin.executeCommand(sender, "user " + user + " parent add " + group);
                 }
             }
         }));
@@ -518,14 +522,14 @@ public class PermissionsExMapping {
             }
         }));
 
-        commands.add(PermissionsExCommand.of(ImmutableList.of("promote", "<user>", "<latter>"), (plugin, sender, arguments) -> {
+        commands.add(PermissionsExCommand.of(ImmutableList.of("promote", "<user>", "<ladder>"), (plugin, sender, arguments) -> {
             String user = arguments.get("user");
             String ladder = arguments.get("ladder");
 
             plugin.executeCommand(sender, "user " + user + " promote " + ladder);
         }));
 
-        commands.add(PermissionsExCommand.of(ImmutableList.of("demote", "<user>", "<latter>"), (plugin, sender, arguments) -> {
+        commands.add(PermissionsExCommand.of(ImmutableList.of("demote", "<user>", "<ladder>"), (plugin, sender, arguments) -> {
             String user = arguments.get("user");
             String ladder = arguments.get("ladder");
 

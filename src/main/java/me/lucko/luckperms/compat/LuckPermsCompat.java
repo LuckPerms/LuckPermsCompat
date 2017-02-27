@@ -108,8 +108,18 @@ public class LuckPermsCompat extends JavaPlugin implements CommandExecutor {
             return true;
         }
 
-        GroupManagerMapping.sendUsage(sender);
-        PermissionsExMapping.sendUsage(sender);
+        if (label.equalsIgnoreCase("pex")) {
+            PermissionsExMapping.sendUsage(sender);
+        } else if (args.length > 0 && args[0].equalsIgnoreCase("pex")) {
+            PermissionsExMapping.sendUsage(sender);
+        } else if (args.length > 0 && args[0].equalsIgnoreCase("groupmanager")) {
+            GroupManagerMapping.sendUsage(sender);
+        } else if (args.length > 0 && args[0].equalsIgnoreCase("gm")) {
+            GroupManagerMapping.sendUsage(sender);
+        } else {
+            PermissionsExMapping.sendUsage(sender);
+            GroupManagerMapping.sendUsage(sender);
+        }
 
         return true;
     }
