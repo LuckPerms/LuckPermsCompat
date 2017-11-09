@@ -22,12 +22,8 @@
 
 package me.lucko.luckperms.compat;
 
-import com.google.common.base.Splitter;
-
-import me.lucko.luckperms.bukkit.BukkitCommand;
+import me.lucko.luckperms.bukkit.BukkitCommandExecutor;
 import me.lucko.luckperms.bukkit.LPBukkitPlugin;
-import me.lucko.luckperms.common.commands.utils.Util;
-import me.lucko.luckperms.common.constants.Patterns;
 import me.lucko.luckperms.compat.groupmanager.GroupManagerMapping;
 import me.lucko.luckperms.compat.permissionsex.PermissionsExMapping;
 
@@ -39,7 +35,6 @@ import org.bukkit.command.CommandMap;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.lang.reflect.Constructor;
@@ -71,7 +66,7 @@ public class LuckPermsCompat extends JavaPlugin implements CommandExecutor {
     // the internal plugin instance
     private LPBukkitPlugin luckPerms;
     // the LP command executor
-    private BukkitCommand commandManager;
+    private BukkitCommandExecutor commandManager;
 
     // cached command map instance
     private CommandMap commandMap = null;
@@ -130,11 +125,7 @@ public class LuckPermsCompat extends JavaPlugin implements CommandExecutor {
      * @param cmd the command string, without the "/luckperms" part
      */
     public void executeCommand(CommandSender sender, String cmd) {
-        commandManager.onCommand(
-                luckPerms.getSenderFactory().wrap(sender),
-                "luckperms",
-                Util.stripQuotes(Splitter.on(Patterns.COMMAND_SEPARATOR).omitEmptyStrings().splitToList(cmd))
-        );
+        commandManager.onCommand(sender, null, "luckperms", cmd.split(" "));
     }
 
     /**
@@ -144,40 +135,7 @@ public class LuckPermsCompat extends JavaPlugin implements CommandExecutor {
      * @param executor the executor instance for the command
      */
     public void hijackCommand(String alias, CommandExecutor executor) {
-        PluginCommand cmd = getServer().getPluginCommand(alias);
-        if (cmd == null) {
-            try {
-                cmd = (PluginCommand) commandConstructor.newInstance(alias, this);
-            } catch (Exception ex) {
-                getLogger().severe("Could not register command: " + alias);
-                return;
-            }
-
-            // Get the command map to register the command to
-            if (commandMap == null) {
-                try {
-                    PluginManager pluginManager = getServer().getPluginManager();
-                    Field commandMapField = pluginManager.getClass().getDeclaredField("commandMap");
-                    commandMapField.setAccessible(true);
-                    commandMap = (CommandMap) commandMapField.get(pluginManager);
-                } catch (Exception ex) {
-                    getLogger().severe("Could not register command: " + alias);
-                    return;
-                }
-            }
-
-            commandMap.register(this.getDescription().getName(), cmd);
-        } else {
-            // we may need to change the owningPlugin, since this was already registered
-            try {
-                owningPluginField.set(cmd, this);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
-        cmd.setExecutor(executor);
-        cmd.setTabCompleter(null);
+        CommandMapUtil.registerCommand(this, executor, alias);
     }
 
     /**
