@@ -23,21 +23,17 @@
 package me.lucko.luckperms.compat;
 
 import me.lucko.luckperms.bukkit.BukkitCommandExecutor;
+import me.lucko.luckperms.bukkit.LPBukkitBootstrap;
 import me.lucko.luckperms.bukkit.LPBukkitPlugin;
 import me.lucko.luckperms.compat.groupmanager.GroupManagerMapping;
 import me.lucko.luckperms.compat.permissionsex.PermissionsExMapping;
 
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandMap;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.PluginCommand;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 
 /**
@@ -45,42 +41,29 @@ import java.lang.reflect.Field;
  */
 public class LuckPermsCompat extends JavaPlugin implements CommandExecutor {
 
-    // Used for registering commands at runtime
-    private static Constructor<?> commandConstructor;
-    private static Field owningPluginField;
-    static {
-        try {
-            commandConstructor = PluginCommand.class.getDeclaredConstructor(String.class, Plugin.class);
-            commandConstructor.setAccessible(true);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        try {
-            owningPluginField = PluginCommand.class.getDeclaredField("owningPlugin");
-            owningPluginField.setAccessible(true);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
     // the internal plugin instance
     private LPBukkitPlugin luckPerms;
     // the LP command executor
     private BukkitCommandExecutor commandManager;
 
-    // cached command map instance
-    private CommandMap commandMap = null;
+    private void getLuckPerms() throws Exception {
+        LPBukkitBootstrap bootstrap = (LPBukkitBootstrap) getServer().getPluginManager().getPlugin("LuckPerms");
+
+        Field pluginField = LPBukkitBootstrap.class.getField("plugin");
+        pluginField.setAccessible(true);
+
+        this.luckPerms = ((LPBukkitPlugin) pluginField.get(bootstrap));
+        this.commandManager = luckPerms.getCommandManager();
+    }
 
     @Override
     public void onEnable() {
         getLogger().info("Hooking with LuckPerms.");
-
-        Object instance = Bukkit.getPluginManager().getPlugin("LuckPerms");
-        if (!(instance instanceof LPBukkitPlugin)) {
-            throw new RuntimeException("Illegal plugin instance: " + instance.getClass().getName());
+        try {
+            getLuckPerms();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-        luckPerms = (LPBukkitPlugin) instance;
-        commandManager = luckPerms.getCommandManager();
 
         hijackCommand("lpc", this);
 
@@ -97,7 +80,7 @@ public class LuckPermsCompat extends JavaPlugin implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        msg(sender, "&2Running &bLuckPermsCompat v" + getDescription().getVersion() + "&2, hooked with &bLuckPerms v" + luckPerms.getVersion() + "&2.");
+        msg(sender, "&2Running &bLuckPermsCompat v" + getDescription().getVersion() + "&2, hooked with &bLuckPerms v" + luckPerms.getBootstrap().getVersion() + "&2.");
 
         if (!sender.hasPermission("luckpermscompat.use")) {
             return true;
