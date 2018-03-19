@@ -52,7 +52,7 @@ public class PermissionsExMapping {
             cmd.setPlugin(plugin);
         }
 
-        plugin.hijackCommand("pex", new PermissionsExCommandExecutor(plugin, MAPPING));
+        plugin.registerCommand("pex", new PermissionsExCommandExecutor(plugin, MAPPING));
     }
 
     private static List<PermissionsExCommand> buildMapping() {

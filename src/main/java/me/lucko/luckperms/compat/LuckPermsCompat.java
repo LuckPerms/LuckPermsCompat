@@ -22,9 +22,6 @@
 
 package me.lucko.luckperms.compat;
 
-import me.lucko.luckperms.bukkit.BukkitCommandExecutor;
-import me.lucko.luckperms.bukkit.LPBukkitBootstrap;
-import me.lucko.luckperms.bukkit.LPBukkitPlugin;
 import me.lucko.luckperms.compat.groupmanager.GroupManagerMapping;
 import me.lucko.luckperms.compat.permissionsex.PermissionsExMapping;
 
@@ -32,40 +29,25 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.lang.reflect.Field;
+import java.util.Objects;
 
 /**
  * A plugin that provides command aliases for LuckPerms commands.
  */
 public class LuckPermsCompat extends JavaPlugin implements CommandExecutor {
 
-    // the internal plugin instance
-    private LPBukkitPlugin luckPerms;
-    // the LP command executor
-    private BukkitCommandExecutor commandManager;
-
-    private void getLuckPerms() throws Exception {
-        LPBukkitBootstrap bootstrap = (LPBukkitBootstrap) getServer().getPluginManager().getPlugin("LuckPerms");
-
-        Field pluginField = LPBukkitBootstrap.class.getField("plugin");
-        pluginField.setAccessible(true);
-
-        this.luckPerms = ((LPBukkitPlugin) pluginField.get(bootstrap));
-        this.commandManager = luckPerms.getCommandManager();
-    }
+    // the luckperms plugin
+    private Plugin luckPerms;
 
     @Override
     public void onEnable() {
-        getLogger().info("Hooking with LuckPerms.");
-        try {
-            getLuckPerms();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        this.luckPerms = getServer().getPluginManager().getPlugin("LuckPerms");
+        Objects.requireNonNull(this.luckPerms, "luckPerms");
 
-        hijackCommand("lpc", this);
+        registerCommand("lpc", this);
 
         // Group Manager
         getLogger().info("Remapping GroupManager commands");
@@ -80,7 +62,7 @@ public class LuckPermsCompat extends JavaPlugin implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        msg(sender, "&2Running &bLuckPermsCompat v" + getDescription().getVersion() + "&2, hooked with &bLuckPerms v" + luckPerms.getBootstrap().getVersion() + "&2.");
+        msg(sender, "&2Running &bLuckPermsCompat v" + getDescription().getVersion() + "&2, hooked with &bLuckPerms v" + this.luckPerms.getDescription().getVersion() + "&2.");
 
         if (!sender.hasPermission("luckpermscompat.use")) {
             return true;
@@ -108,7 +90,7 @@ public class LuckPermsCompat extends JavaPlugin implements CommandExecutor {
      * @param cmd the command string, without the "/luckperms" part
      */
     public void executeCommand(CommandSender sender, String cmd) {
-        commandManager.onCommand(sender, null, "luckperms", cmd.split(" "));
+        getServer().dispatchCommand(sender, "lp " + cmd);
     }
 
     /**
@@ -117,7 +99,7 @@ public class LuckPermsCompat extends JavaPlugin implements CommandExecutor {
      * @param alias the command name
      * @param executor the executor instance for the command
      */
-    public void hijackCommand(String alias, CommandExecutor executor) {
+    public void registerCommand(String alias, CommandExecutor executor) {
         CommandMapUtil.registerCommand(this, executor, alias);
     }
 

@@ -50,7 +50,7 @@ public class GroupManagerMapping {
     public static void registerMapping(LuckPermsCompat plugin) {
         for (Map.Entry<String, GroupManagerCommand> e : MAPPING.entrySet()) {
             e.getValue().setPlugin(plugin);
-            plugin.hijackCommand(e.getKey(), e.getValue());
+            plugin.registerCommand(e.getKey(), e.getValue());
         }
     }
 
